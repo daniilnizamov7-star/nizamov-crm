@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Nizamov CRM</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<meta name="theme-color" content="#0f172a">
+<style>
+  :root {
+    --bg: #0f172a;
+    --bg2: #1e293b;
+    --bg3: #273548;
+    --border: #334155;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --blue: #3b82f6;
+    --blue-l: #1d4ed8;
+    --green: #22c55e;
+    --green-l: #15803d;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --purple: #a855f7;
+    --teal: #14b8a6;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+  /* NAV */
+  .nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg2); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 8px; color: var(--text3); border: none; background: none; cursor: pointer; font-size: 10px; transition: color .2s; }
+  .nav-btn.active { color: var(--blue); }
+  .nav-btn svg { width: 22px; height: 22px; }
+
+  /* SCREENS */
+  .screen { display: none; padding: 16px 16px 80px; max-width: 480px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* HEADER */
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding-top: 8px; }
+  .header-title { font-size: 20px; font-weight: 600; }
+  .header-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* CARDS */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+  .card-row { display: flex; align-items: center; justify-content: space-between; }
+
+  /* METRICS */
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .metric { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; }
+  .metric-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .metric-value { font-size: 26px; font-weight: 600; line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+  /* STATUS BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .badge-new { background: rgba(59,130,246,.15); color: var(--blue); }
+  .badge-talk { background: rgba(245,158,11,.15); color: var(--amber); }
+  .badge-meet { background: rgba(168,85,247,.15); color: var(--purple); }
+  .badge-work { background: rgba(20,184,166,.15); color: var(--teal); }
+  .badge-pay { background: rgba(34,197,94,.15); color: var(--green); }
+  .badge-no { background: rgba(239,68,68,.15); color: var(--red); }
+  .badge-pause { background: rgba(100,116,139,.15); color: var(--text3); }
+
+  /* LEAD CARD */
+  .lead-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; cursor: pointer; transition: border-color .2s; }
+  .lead-card:active { border-color: var(--blue); }
+  .lead-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .lead-meta { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+  .lead-row { display: flex; align-items: center; justify-content: space-between; }
+  .lead-product { font-size: 12px; color: var(--text2); }
+  .lead-amount { font-size: 14px; font-weight: 600; color: var(--green); }
+  .lead-followup { font-size: 11px; margin-top: 8px; padding: 6px 10px; border-radius: 6px; }
+  .lead-followup.urgent { background: rgba(239,68,68,.1); color: var(--red); }
+  .lead-followup.soon { background: rgba(245,158,11,.1); color: var(--amber); }
+  .lead-followup.ok { background: rgba(34,197,94,.1); color: var(--green); }
+
+  /* FILTER TABS */
+  .filters { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-btn { flex-shrink: 0; font-size: 12px; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); cursor: pointer; transition: all .2s; }
+  .filter-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+  /* FAB */
+  .fab { position: fixed; bottom: 72px; right: 16px; width: 52px; height: 52px; border-radius: 50%; background: var(--blue); border: none; color: #fff; font-size: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(59,130,246,.4); z-index: 99; transition: transform .15s; }
+  .fab:active { transform: scale(.92); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 200; display: none; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border-radius: 20px 20px 0 0; padding: 20px 16px; width: 100%; max-height: 90vh; overflow-y: auto; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 16px; }
+
+  /* FORM */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--text3); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: .4px; }
+  .form-input, .form-select, .form-textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 12px; color: var(--text); font-size: 14px; outline: none; font-family: inherit; transition: border-color .2s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--blue); }
+  .form-select option { background: var(--bg2); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* BUTTONS */
+  .btn { width: 100%; padding: 13px; border-radius: var(--radius-sm); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity .2s; }
+  .btn:active { opacity: .8; }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-danger { background: rgba(239,68,68,.15); color: var(--red); margin-top: 8px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+  .btn-row .btn { margin-top: 0; }
+
+  /* DETAIL */
+  .detail-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+  .detail-name { font-size: 20px; font-weight: 700; }
+  .detail-section { margin-bottom: 16px; }
+  .detail-section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .detail-row:last-child { border: none; }
+  .detail-label { color: var(--text3); }
+  .detail-val { font-weight: 500; text-align: right; max-width: 60%; word-break: break-word; }
+
+  /* PAYMENTS */
+  .payment-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .payment-item:last-child { border: none; }
+  .payment-desc { font-size: 13px; }
+  .payment-date { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .payment-amount { font-size: 15px; font-weight: 600; }
+  .payment-amount.income { color: var(--green); }
+  .payment-amount.expense { color: var(--red); }
+
+  /* HISTORY */
+  .history-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .history-item:last-child { border: none; }
+  .history-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); flex-shrink: 0; margin-top: 5px; }
+  .history-text { font-size: 13px; color: var(--text2); }
+  .history-date { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  /* FINANCE SCREEN */
+  .finance-total { background: linear-gradient(135deg, #1d4ed8, #7c3aed); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .finance-total-label { font-size: 12px; opacity: .7; margin-bottom: 4px; }
+  .finance-total-value { font-size: 32px; font-weight: 700; }
+  .finance-total-sub { font-size: 12px; opacity: .7; margin-top: 4px; }
+  .finance-row { display: flex; justify-content: space-between; }
+  .finance-half { flex: 1; }
+  .finance-half:first-child { margin-right: 5px; }
+  .finance-half:last-child { margin-left: 5px; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 40px 20px; color: var(--text3); }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { font-size: 14px; }
+
+  /* SEARCH */
+  .search-wrap { position: relative; margin-bottom: 14px; }
+  .search-input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px 10px 36px; color: var(--text); font-size: 14px; outline: none; }
+  .search-input:focus { border-color: var(--blue); }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; }
+
+  /* PIPELINE */
+  .pipeline { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .pipeline::-webkit-scrollbar { display: none; }
+  .pipeline-col { flex-shrink: 0; width: 140px; }
+  .pipeline-header { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text3); margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+  .pipeline-count { background: var(--bg3); padding: 1px 6px; border-radius: 10px; font-size: 10px; }
+  .pipeline-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; margin-bottom: 6px; cursor: pointer; }
+  .pipeline-card-name { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+  .pipeline-card-product { font-size: 11px; color: var(--text3); }
+  .pipeline-card-amount { font-size: 12px; color: var(--green); margin-top: 4px; font-weight: 600; }
+
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .back-btn { display: flex; align-items: center; gap: 6px; color: var(--blue); font-size: 14px; cursor: pointer; margin-bottom: 16px; border: none; background: none; padding: 0; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 4px; background: var(--bg3); color: var(--text3); margin-right: 4px; margin-bottom: 4px; }
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+  .progress-bar { height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width .3s; }
+</style>
+</head>
+<body>
+
+<!-- SCREENS -->
+<div id="screen-home" class="screen active"></div>
+<div id="screen-leads" class="screen"></div>
+<div id="screen-finance" class="screen"></div>
+<div id="screen-pipeline" class="screen"></div>
+<div id="screen-detail" class="screen"></div>
+
+<!-- FAB -->
+<button class="fab" id="fab-btn" onclick="openAddModal()">+</button>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showScreen('home',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Главная
+  </button>
+  <button class="nav-btn" onclick="showScreen('leads',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>
+    Лиды
+  </button>
+  <button class="nav-btn" onclick="showScreen('pipeline',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="8" width="5" height="13" rx="1"/><rect x="17" y="5" width="5" height="16" rx="1"/></svg>
+    Воронка
+  </button>
+  <button class="nav-btn" onclick="showScreen('finance',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    Финансы
+  </button>
+</nav>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title">Новый лид</div>
+    <div class="form-group">
+      <label class="form-label">Название / Имя клиента</label>
+      <input class="form-input" id="f-name" placeholder="8-БиТ, Кафе Уют...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Контакт (TG, телефон)</label>
+      <input class="form-input" id="f-contact" placeholder="@username или +7...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Ниша</label>
+        <select class="form-select" id="f-niche">
+          <option value="Магазин игр">Магазин игр</option>
+          <option value="Кафе">Кафе</option>
+          <option value="Фитнес">Фитнес</option>
+          <option value="Магазин одежды">Магазин одежды</option>
+          <option value="Барбершоп">Барбершоп</option>
+          <option value="Автосалон">Автосалон</option>
+          <option value="Кофейня">Кофейня</option>
+          <option value="Другое">Другое</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Статус</label>
+        <select class="form-select" id="f-status">
+          <option value="new">Написал</option>
+          <option value="talk">Общаемся</option>
+          <option value="meet">Встреча</option>
+          <option value="work">В работе</option>
+          <option value="pay">Платит</option>
+          <option value="no">Отказ</option>
+          <option value="pause">Пауза</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Продукт</label>
+      <select class="form-select" id="f-product">
+        <option value="FlowCount">FlowCount</option>
+        <option value="Лендинг">Лендинг</option>
+        <option value="PWA">PWA</option>
+        <option value="Ракета">Ракета (лояльность)</option>
+        <option value="FitCore">FitCore</option>
+        <option value="Следопыт">Следопыт</option>
+        <option value="Другое">Другое</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Сумма сделки (₽)</label>
+        <input class="form-input" id="f-amount" type="number" placeholder="15000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ретейнер/мес (₽)</label>
+        <input class="form-input" id="f-retainer" type="number" placeholder="3900">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Следующий шаг / Followup</label>
+      <input class="form-input" id="f-followup" type="date">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Заметки</label>
+      <textarea class="form-textarea" id="f-notes" placeholder="Есть камера у входа, нет ПК, ждёт демо..."></textarea>
+    </div>
+    <input type="hidden" id="f-edit-id">
+    <div class="btn-row">
+      <button class="btn" style="background:var(--bg3);color:var(--text2);flex:0 0 80px" onclick="closeAddModal()">Отмена</button>
+      <button class="btn btn-primary" onclick="saveLead()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAY MODAL -->
+<div class="modal-overlay" id="pay-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Добавить платёж</div>
+    <div class="form-group">
+      <label class="form-label">Описание</label>
+      <input class="form-input" id="p-desc" placeholder="Установка FlowCount, Ретейнер май...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Сумма (₽)</label>
+        <input class="form-input" id="p-amount" type="number" placeholder="15000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Дата</label>
+        <input class="form-input" id="p-date" type="date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Тип</label>
+      <select class="form-select" id="p-type">
+        <option value="income">Доход</option>
+        <option value="expense">Расход</option>
+      </select>
+    </div>
+    <input type="hidden" id="p-lead-id">
+    <div class="btn-row">
+      <button class="btn" style="background:var(--bg3);color:var(--text2);flex:0 0 80px" onclick="closePayModal()">Отмена</button>
+      <button class="btn btn-primary" onclick="savePayment()">Добавить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== DATA =====
+let leads = JSON.parse(localStorage.getItem('nc_leads') || '[]');
+let payments = JSON.parse(localStorage.getItem('nc_payments') || '[]');
+let currentFilter = 'all';
+let currentLeadId = null;
+
+const STATUSES = {
+  new:   { label: 'Написал',   cls: 'badge-new' },
+  talk:  { label: 'Общаемся',  cls: 'badge-talk' },
+  meet:  { label: 'Встреча',   cls: 'badge-meet' },
+  work:  { label: 'В работе',  cls: 'badge-work' },
+  pay:   { label: 'Платит',    cls: 'badge-pay' },
+  no:    { label: 'Отказ',     cls: 'badge-no' },
+  pause: { label: 'Пауза',     cls: 'badge-pause' },
+};
+
+function save() {
+  localStorage.setItem('nc_leads', JSON.stringify(leads));
+  localStorage.setItem('nc_payments', JSON.stringify(payments));
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function formatDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+}
+
+function formatMoney(n) {
+  if (!n) return '—';
+  return Number(n).toLocaleString('ru-RU') + ' ₽';
+}
+
+function daysUntil(d) {
+  if (!d) return null;
+  const diff = Math.ceil((new Date(d) - new Date(today())) / 86400000);
+  return diff;
+}
+
+function followupClass(d) {
+  const days = daysUntil(d);
+  if (days === null) return '';
+  if (days < 0) return 'urgent';
+  if (days <= 2) return 'soon';
+  return 'ok';
+}
+
+function followupText(d) {
+  const days = daysUntil(d);
+  if (days === null) return '';
+  if (days < 0) return `⚠️ Просрочено ${Math.abs(days)} дн назад`;
+  if (days === 0) return '🔔 Сегодня надо написать';
+  if (days === 1) return '⏰ Завтра followup';
+  return `📅 Followup через ${days} дн — ${formatDate(d)}`;
+}
+
+// ===== SCREENS =====
+function showScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const fab = document.getElementById('fab-btn');
+  fab.style.display = name === 'detail' || name === 'finance' ? 'none' : 'flex';
+  if (name === 'home') renderHome();
+  if (name === 'leads') renderLeads();
+  if (name === 'finance') renderFinance();
+  if (name === 'pipeline') renderPipeline();
+}
+
+// ===== HOME =====
+function renderHome() {
+  const active = leads.filter(l => l.status !== 'no');
+  const paying = leads.filter(l => l.status === 'pay');
+  const mrr = paying.reduce((s, l) => s + (Number(l.retainer) || 0), 0);
+  const totalDeals = leads.filter(l => l.status === 'pay').reduce((s,l) => s + (Number(l.amount)||0), 0);
+  const incomeTotal = payments.filter(p => p.type === 'income').reduce((s,p) => s + Number(p.amount), 0);
+
+  const urgent = leads.filter(l => {
+    if (!l.followup || l.status === 'no') return false;
+    return daysUntil(l.followup) <= 1;
+  });
+
+  const thisMonth = leads.filter(l => {
+    const d = new Date(l.createdAt);
+    const n = new Date();
+    return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
+  });
+
+  document.getElementById('screen-home').innerHTML = `
+    <div class="header">
+      <div>
+        <div class="header-title">Nizamov CRM</div>
+        <div class="header-sub">${new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'})}</div>
+      </div>
+      <div style="font-size:22px">🤲</div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">MRR</div>
+        <div class="metric-value" style="color:var(--green)">${mrr.toLocaleString('ru')} ₽</div>
+        <div class="metric-sub">${paying.length} клиент${paying.length===1?'':paying.length<5?'а':'ов'} платят</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Всего получено</div>
+        <div class="metric-value" style="color:var(--blue)">${incomeTotal.toLocaleString('ru')} ₽</div>
+        <div class="metric-sub">все времена</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Активных лидов</div>
+        <div class="metric-value">${active.length}</div>
+        <div class="metric-sub">${thisMonth.length} новых в этом мес</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Конверсия</div>
+        <div class="metric-value" style="color:var(--amber)">${leads.length ? Math.round(paying.length/leads.length*100) : 0}%</div>
+        <div class="metric-sub">лид → клиент</div>
+      </div>
+    </div>
+
+    ${urgent.length ? `
+    <div class="section-title">🔔 Требуют внимания</div>
+    ${urgent.map(l => `
+      <div class="lead-card" onclick="openDetail('${l.id}')">
+        <div class="lead-row">
+          <div class="lead-name">${l.name}</div>
+          <span class="badge ${STATUSES[l.status].cls}">${STATUSES[l.status].label}</span>
+        </div>
+        <div class="lead-followup urgent">${followupText(l.followup)}</div>
+      </div>
+    `).join('')}
+    <div class="divider"></div>
+    ` : ''}
+
+    <div class="section-title">Воронка продаж</div>
+    <div class="card">
+      ${Object.entries(STATUSES).map(([key, val]) => {
+        const count = leads.filter(l => l.status === key).length;
+        const pct = leads.length ? Math.round(count/leads.length*100) : 0;
+        return `
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span class="badge ${val.cls}">${val.label}</span>
+              <span style="font-size:12px;color:var(--text3)">${count} лид${count===1?'':count<5?'а':'ов'}</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${key==='pay'?'var(--green)':key==='no'?'var(--red)':'var(--blue)'}"></div></div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <div class="section-title">Последние лиды</div>
+    ${leads.slice(-3).reverse().map(l => leadCard(l)).join('') || '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">Добавь первый лид</div></div>'}
+  `;
+}
+
+// ===== LEADS =====
+function renderLeads(search = '') {
+  let filtered = leads.filter(l => {
+    if (currentFilter !== 'all' && l.status !== currentFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return l.name.toLowerCase().includes(q) || (l.contact||'').toLowerCase().includes(q) || (l.product||'').toLowerCase().includes(q);
+    }
+    return true;
+  });
+  filtered = filtered.slice().reverse();
+
+  document.getElementById('screen-leads').innerHTML = `
+    <div class="header">
+      <div class="header-title">Лиды</div>
+      <div style="font-size:13px;color:var(--text3)">${leads.length} всего</div>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" placeholder="Поиск по имени, продукту..." oninput="renderLeads(this.value)" value="${search}">
+    </div>
+    <div class="filters">
+      <button class="filter-btn ${currentFilter==='all'?'active':''}" onclick="setFilter('all')">Все ${leads.length}</button>
+      ${Object.entries(STATUSES).map(([k,v]) => {
+        const c = leads.filter(l=>l.status===k).length;
+        return c ? `<button class="filter-btn ${currentFilter===k?'active':''}" onclick="setFilter('${k}')">${v.label} ${c}</button>` : '';
+      }).join('')}
+    </div>
+    ${filtered.length ? filtered.map(l => leadCard(l)).join('') : '<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">Ничего не найдено</div></div>'}
+  `;
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  renderLeads();
+}
+
+function leadCard(l) {
+  const fu = followupText(l.followup);
+  const fuCls = followupClass(l.followup);
+  return `
+    <div class="lead-card" onclick="openDetail('${l.id}')">
+      <div class="lead-row" style="margin-bottom:6px">
+        <div class="lead-name">${l.name}</div>
+        <span class="badge ${STATUSES[l.status].cls}">${STATUSES[l.status].label}</span>
+      </div>
+      <div class="lead-meta">${l.niche || ''} ${l.niche && l.product ? '·' : ''} ${l.product || ''}</div>
+      <div class="lead-row">
+        <div class="lead-product">${l.contact || ''}</div>
+        <div class="lead-amount">${l.amount ? formatMoney(l.amount) : l.retainer ? formatMoney(l.retainer)+'/мес' : ''}</div>
+      </div>
+      ${fu ? `<div class="lead-followup ${fuCls}">${fu}</div>` : ''}
+    </div>
+  `;
+}
+
+// ===== DETAIL =====
+function openDetail(id) {
+  currentLeadId = id;
+  const l = leads.find(x => x.id === id);
+  if (!l) return;
+  const lPayments = payments.filter(p => p.leadId === id);
+  const totalIn = lPayments.filter(p=>p.type==='income').reduce((s,p)=>s+Number(p.amount),0);
+  const totalEx = lPayments.filter(p=>p.type==='expense').reduce((s,p)=>s+Number(p.amount),0);
+
+  document.getElementById('screen-detail').innerHTML = `
+    <button class="back-btn" onclick="showScreen('leads', document.querySelectorAll('.nav-btn')[1])">
+      ← Назад
+    </button>
+    <div class="detail-header">
+      <div>
+        <div class="detail-name">${l.name}</div>
+        <div style="margin-top:6px"><span class="badge ${STATUSES[l.status].cls}">${STATUSES[l.status].label}</span></div>
+      </div>
+      <button onclick="openEditModal('${id}')" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px">✏️ Изменить</button>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Информация</div>
+      <div class="card" style="padding:0">
+        ${row('Контакт', l.contact || '—')}
+        ${row('Ниша', l.niche || '—')}
+        ${row('Продукт', l.product || '—')}
+        ${row('Сумма сделки', l.amount ? formatMoney(l.amount) : '—')}
+        ${row('Ретейнер', l.retainer ? formatMoney(l.retainer) + '/мес' : '—')}
+        ${row('Followup', l.followup ? formatDate(l.followup) : '—')}
+        ${row('Добавлен', formatDate(l.createdAt))}
+      </div>
+    </div>
+
+    ${l.notes ? `
+    <div class="detail-section">
+      <div class="detail-section-title">Заметки</div>
+      <div class="card" style="color:var(--text2);font-size:13px;line-height:1.6">${l.notes}</div>
+    </div>` : ''}
+
+    <div class="detail-section">
+      <div class="detail-section-title">Финансы по клиенту</div>
+      <div class="metrics" style="margin-bottom:10px">
+        <div class="metric"><div class="metric-label">Получено</div><div class="metric-value" style="color:var(--green);font-size:20px">${totalIn.toLocaleString('ru')} ₽</div></div>
+        <div class="metric"><div class="metric-label">Расходы</div><div class="metric-value" style="color:var(--red);font-size:20px">${totalEx.toLocaleString('ru')} ₽</div></div>
+      </div>
+      <button onclick="openPayModal('${id}')" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:10px;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:10px">+ Добавить платёж</button>
+      ${lPayments.length ? `<div class="card" style="padding:0">${lPayments.slice().reverse().map(p => `
+        <div class="payment-item" style="padding:10px 14px">
+          <div><div class="payment-desc">${p.desc}</div><div class="payment-date">${formatDate(p.date)}</div></div>
+          <div class="payment-amount ${p.type}">${p.type==='income'?'+':'-'}${Number(p.amount).toLocaleString('ru')} ₽</div>
+        </div>
+      `).join('')}</div>` : '<div style="color:var(--text3);font-size:13px;text-align:center;padding:10px">Платежей пока нет</div>'}
+    </div>
+
+    <button class="btn btn-danger" onclick="deleteLead('${id}')">🗑 Удалить лид</button>
+  `;
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-detail').classList.add('active');
+  document.getElementById('fab-btn').style.display = 'none';
+}
+
+function row(label, val) {
+  return `<div class="detail-row" style="padding:10px 14px"><span class="detail-label">${label}</span><span class="detail-val">${val}</span></div>`;
+}
+
+// ===== FINANCE =====
+function renderFinance() {
+  const income = payments.filter(p=>p.type==='income');
+  const expense = payments.filter(p=>p.type==='expense');
+  const totalIn = income.reduce((s,p)=>s+Number(p.amount),0);
+  const totalEx = expense.reduce((s,p)=>s+Number(p.amount),0);
+  const net = totalIn - totalEx;
+
+  const now = new Date();
+  const monthIn = income.filter(p => {
+    const d = new Date(p.date);
+    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  }).reduce((s,p)=>s+Number(p.amount),0);
+
+  const mrr = leads.filter(l=>l.status==='pay').reduce((s,l)=>s+(Number(l.retainer)||0),0);
+
+  document.getElementById('screen-finance').innerHTML = `
+    <div class="header"><div class="header-title">Финансы</div></div>
+    <div class="finance-total">
+      <div class="finance-total-label">Чистая прибыль</div>
+      <div class="finance-total-value">${net.toLocaleString('ru')} ₽</div>
+      <div class="finance-total-sub">В этом месяце: ${monthIn.toLocaleString('ru')} ₽</div>
+    </div>
+    <div class="metrics" style="margin-bottom:16px">
+      <div class="metric"><div class="metric-label">Доходы</div><div class="metric-value" style="color:var(--green);font-size:20px">${totalIn.toLocaleString('ru')} ₽</div></div>
+      <div class="metric"><div class="metric-label">Расходы</div><div class="metric-value" style="color:var(--red);font-size:20px">${totalEx.toLocaleString('ru')} ₽</div></div>
+      <div class="metric"><div class="metric-label">MRR (план)</div><div class="metric-value" style="color:var(--blue);font-size:20px">${mrr.toLocaleString('ru')} ₽</div></div>
+      <div class="metric"><div class="metric-label">Платящих</div><div class="metric-value" style="font-size:20px">${leads.filter(l=>l.status==='pay').length}</div></div>
+    </div>
+    <div class="section-title">Все транзакции</div>
+    ${payments.length ? `<div class="card" style="padding:0">${payments.slice().reverse().map(p => {
+      const l = leads.find(x=>x.id===p.leadId);
+      return `<div class="payment-item" style="padding:10px 14px">
+        <div>
+          <div class="payment-desc">${p.desc}</div>
+          <div class="payment-date">${l?l.name+' · ':''} ${formatDate(p.date)}</div>
+        </div>
+        <div class="payment-amount ${p.type}">${p.type==='income'?'+':'-'}${Number(p.amount).toLocaleString('ru')} ₽</div>
+      </div>`;
+    }).join('')}</div>` : '<div class="empty"><div class="empty-icon">💰</div><div class="empty-text">Платежей пока нет</div></div>'}
+  `;
+}
+
+// ===== PIPELINE =====
+function renderPipeline() {
+  const cols = Object.entries(STATUSES);
+  document.getElementById('screen-pipeline').innerHTML = `
+    <div class="header"><div class="header-title">Воронка</div></div>
+    <div class="pipeline">
+      ${cols.map(([key, val]) => {
+        const col = leads.filter(l=>l.status===key);
+        return `
+          <div class="pipeline-col">
+            <div class="pipeline-header">
+              <span>${val.label}</span>
+              <span class="pipeline-count">${col.length}</span>
+            </div>
+            ${col.map(l => `
+              <div class="pipeline-card" onclick="openDetail('${l.id}')">
+                <div class="pipeline-card-name">${l.name}</div>
+                <div class="pipeline-card-product">${l.product||''}</div>
+                ${l.amount||l.retainer ? `<div class="pipeline-card-amount">${l.amount?formatMoney(l.amount):formatMoney(l.retainer)+'/мес'}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ===== MODALS =====
+function openAddModal() {
+  document.getElementById('f-edit-id').value = '';
+  document.getElementById('modal-title').textContent = 'Новый лид';
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-contact').value = '';
+  document.getElementById('f-niche').value = 'Магазин игр';
+  document.getElementById('f-status').value = 'new';
+  document.getElementById('f-product').value = 'FlowCount';
+  document.getElementById('f-amount').value = '';
+  document.getElementById('f-retainer').value = '';
+  document.getElementById('f-followup').value = '';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  const l = leads.find(x=>x.id===id);
+  if (!l) return;
+  document.getElementById('f-edit-id').value = id;
+  document.getElementById('modal-title').textContent = 'Редактировать';
+  document.getElementById('f-name').value = l.name;
+  document.getElementById('f-contact').value = l.contact||'';
+  document.getElementById('f-niche').value = l.niche||'Другое';
+  document.getElementById('f-status').value = l.status;
+  document.getElementById('f-product').value = l.product||'Другое';
+  document.getElementById('f-amount').value = l.amount||'';
+  document.getElementById('f-retainer').value = l.retainer||'';
+  document.getElementById('f-followup').value = l.followup||'';
+  document.getElementById('f-notes').value = l.notes||'';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('open');
+}
+
+function saveLead() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Укажи название'); return; }
+  const editId = document.getElementById('f-edit-id').value;
+  const data = {
+    name,
+    contact: document.getElementById('f-contact').value.trim(),
+    niche: document.getElementById('f-niche').value,
+    status: document.getElementById('f-status').value,
+    product: document.getElementById('f-product').value,
+    amount: document.getElementById('f-amount').value,
+    retainer: document.getElementById('f-retainer').value,
+    followup: document.getElementById('f-followup').value,
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+  if (editId) {
+    const idx = leads.findIndex(x=>x.id===editId);
+    if (idx>=0) { leads[idx] = {...leads[idx], ...data}; }
+  } else {
+    data.id = genId();
+    data.createdAt = today();
+    leads.push(data);
+  }
+  save();
+  closeAddModal();
+  if (editId) { openDetail(editId); } else { renderLeads(); showScreen('leads', document.querySelectorAll('.nav-btn')[1]); }
+}
+
+function deleteLead(id) {
+  if (!confirm('Удалить лид?')) return;
+  leads = leads.filter(l=>l.id!==id);
+  payments = payments.filter(p=>p.leadId!==id);
+  save();
+  showScreen('leads', document.querySelectorAll('.nav-btn')[1]);
+  renderLeads();
+}
+
+function openPayModal(leadId) {
+  document.getElementById('p-lead-id').value = leadId;
+  document.getElementById('p-desc').value = '';
+  document.getElementById('p-amount').value = '';
+  document.getElementById('p-date').value = today();
+  document.getElementById('p-type').value = 'income';
+  document.getElementById('pay-modal').classList.add('open');
+}
+
+function closePayModal() {
+  document.getElementById('pay-modal').classList.remove('open');
+}
+
+function savePayment() {
+  const amount = document.getElementById('p-amount').value;
+  const desc = document.getElementById('p-desc').value.trim();
+  if (!amount || !desc) { alert('Заполни описание и сумму'); return; }
+  payments.push({
+    id: genId(),
+    leadId: document.getElementById('p-lead-id').value,
+    desc,
+    amount: Number(amount),
+    date: document.getElementById('p-date').value,
+    type: document.getElementById('p-type').value,
+  });
+  save();
+  closePayModal();
+  openDetail(document.getElementById('p-lead-id').value);
+}
+
+// Close modals on overlay click
+document.getElementById('add-modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeAddModal(); });
+document.getElementById('pay-modal').addEventListener('click', e => { if(e.target===e.currentTarget) closePayModal(); });
+
+// Init
+renderHome();
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").then(() => {
+      console.log("SW registered");
+    });
+  });
+}
+</script>
+</body>
+</html>
