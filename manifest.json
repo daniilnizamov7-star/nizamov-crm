@@ -2,7 +2,7 @@
   "name": "Nizamov CRM",
   "short_name": "CRM",
   "description": "Личная CRM для управления лидами и сделками",
-  "start_url": "./nizamov_crm.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
