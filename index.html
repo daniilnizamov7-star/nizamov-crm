@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Nizamov CRM</title>
-<link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="theme-color" content="#0f172a">
 <style>
   :root {
@@ -227,16 +227,21 @@
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Ниша</label>
-        <select class="form-select" id="f-niche">
-          <option value="Магазин игр">Магазин игр</option>
-          <option value="Кафе">Кафе</option>
-          <option value="Фитнес">Фитнес</option>
-          <option value="Магазин одежды">Магазин одежды</option>
-          <option value="Барбершоп">Барбершоп</option>
-          <option value="Автосалон">Автосалон</option>
-          <option value="Кофейня">Кофейня</option>
-          <option value="Другое">Другое</option>
-        </select>
+        <input class="form-input" id="f-niche" placeholder="Кафе, барбершоп, магазин..." list="niche-list">
+        <datalist id="niche-list">
+          <option value="Магазин игр">
+          <option value="Кафе">
+          <option value="Фитнес">
+          <option value="Магазин одежды">
+          <option value="Барбершоп">
+          <option value="Автосалон">
+          <option value="Кофейня">
+          <option value="Шоурум">
+          <option value="Аптека">
+          <option value="Пекарня">
+          <option value="Зоомагазин">
+          <option value="Салон красоты">
+        </datalist>
       </div>
       <div class="form-group">
         <label class="form-label">Статус</label>
@@ -274,8 +279,9 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Следующий шаг / Followup</label>
+      <label class="form-label">Когда написать снова (Followup)</label>
       <input class="form-input" id="f-followup" type="date">
+      <div style="font-size:11px;color:var(--text3);margin-top:5px">CRM напомнит красным если не ответили до этой даты</div>
     </div>
     <div class="form-group">
       <label class="form-label">Заметки</label>
@@ -684,7 +690,7 @@ function openAddModal() {
   document.getElementById('modal-title').textContent = 'Новый лид';
   document.getElementById('f-name').value = '';
   document.getElementById('f-contact').value = '';
-  document.getElementById('f-niche').value = 'Магазин игр';
+  document.getElementById('f-niche').value = '';
   document.getElementById('f-status').value = 'new';
   document.getElementById('f-product').value = 'FlowCount';
   document.getElementById('f-amount').value = '';
@@ -701,7 +707,7 @@ function openEditModal(id) {
   document.getElementById('modal-title').textContent = 'Редактировать';
   document.getElementById('f-name').value = l.name;
   document.getElementById('f-contact').value = l.contact||'';
-  document.getElementById('f-niche').value = l.niche||'Другое';
+  document.getElementById('f-niche').value = l.niche||'';
   document.getElementById('f-status').value = l.status;
   document.getElementById('f-product').value = l.product||'Другое';
   document.getElementById('f-amount').value = l.amount||'';
@@ -792,7 +798,7 @@ renderHome();
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").then(() => {
+    navigator.serviceWorker.register("/sw.js").then(() => {
       console.log("SW registered");
     });
   });
