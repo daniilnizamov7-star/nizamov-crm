@@ -221,8 +221,26 @@
       <input class="form-input" id="f-name" placeholder="8-БиТ, Кафе Уют...">
     </div>
     <div class="form-group">
-      <label class="form-label">Контакт (TG, телефон)</label>
-      <input class="form-input" id="f-contact" placeholder="@username или +7...">
+      <label class="form-label">Имя владельца / контактного лица</label>
+      <input class="form-input" id="f-contact" placeholder="Александр, Рифат...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Telegram</label>
+      <input class="form-input" id="f-telegram" placeholder="@username">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Телефон</label>
+        <input class="form-input" id="f-phone" type="tel" placeholder="+7 991 174-51-13">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="f-email" type="email" placeholder="mail@mail.ru">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Адрес заведения</label>
+      <input class="form-input" id="f-address" placeholder="ул. Кирова, 14 — центр, 20 мин от дома">
     </div>
     <div class="form-row">
       <div class="form-group">
@@ -538,7 +556,7 @@ function leadCard(l) {
       </div>
       <div class="lead-meta">${l.niche || ''} ${l.niche && l.product ? '·' : ''} ${l.product || ''}</div>
       <div class="lead-row">
-        <div class="lead-product">${l.contact || ''}</div>
+        <div class="lead-product">${l.address ? '📍 ' + l.address : l.telegram ? l.telegram : l.phone || ''}</div>
         <div class="lead-amount">${l.amount ? formatMoney(l.amount) : l.retainer ? formatMoney(l.retainer)+'/мес' : ''}</div>
       </div>
       ${fu ? `<div class="lead-followup ${fuCls}">${fu}</div>` : ''}
@@ -571,6 +589,10 @@ function openDetail(id) {
       <div class="detail-section-title">Информация</div>
       <div class="card" style="padding:0">
         ${row('Контакт', l.contact || '—')}
+        ${l.telegram ? row('Telegram', `<a href="https://t.me/${l.telegram.replace('@','')}" target="_blank" style="color:var(--blue)">${l.telegram}</a>`) : ''}
+        ${l.phone ? row('Телефон', `<a href="tel:${l.phone}" style="color:var(--blue)">${l.phone}</a>`) : ''}
+        ${l.email ? row('Email', `<a href="mailto:${l.email}" style="color:var(--blue)">${l.email}</a>`) : ''}
+        ${row('Адрес', l.address ? `<a href="https://maps.google.com/?q=${encodeURIComponent(l.address)}" target="_blank" style="color:var(--blue)">${l.address} 🗺</a>` : '—')}
         ${row('Ниша', l.niche || '—')}
         ${row('Продукт', l.product || '—')}
         ${row('Сумма сделки', l.amount ? formatMoney(l.amount) : '—')}
@@ -690,6 +712,10 @@ function openAddModal() {
   document.getElementById('modal-title').textContent = 'Новый лид';
   document.getElementById('f-name').value = '';
   document.getElementById('f-contact').value = '';
+  document.getElementById('f-telegram').value = '';
+  document.getElementById('f-phone').value = '';
+  document.getElementById('f-email').value = '';
+  document.getElementById('f-address').value = '';
   document.getElementById('f-niche').value = '';
   document.getElementById('f-status').value = 'new';
   document.getElementById('f-product').value = 'FlowCount';
@@ -707,6 +733,10 @@ function openEditModal(id) {
   document.getElementById('modal-title').textContent = 'Редактировать';
   document.getElementById('f-name').value = l.name;
   document.getElementById('f-contact').value = l.contact||'';
+  document.getElementById('f-telegram').value = l.telegram||'';
+  document.getElementById('f-phone').value = l.phone||'';
+  document.getElementById('f-email').value = l.email||'';
+  document.getElementById('f-address').value = l.address||'';
   document.getElementById('f-niche').value = l.niche||'';
   document.getElementById('f-status').value = l.status;
   document.getElementById('f-product').value = l.product||'Другое';
@@ -728,6 +758,10 @@ function saveLead() {
   const data = {
     name,
     contact: document.getElementById('f-contact').value.trim(),
+    telegram: document.getElementById('f-telegram').value.trim(),
+    phone: document.getElementById('f-phone').value.trim(),
+    email: document.getElementById('f-email').value.trim(),
+    address: document.getElementById('f-address').value.trim(),
     niche: document.getElementById('f-niche').value,
     status: document.getElementById('f-status').value,
     product: document.getElementById('f-product').value,
