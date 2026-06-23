@@ -1,4 +1,4 @@
-const CACHE = 'nizamov-crm-v2';
+const CACHE = 'nizamov-crm-v3';
 const FILES = [
   '/',
   '/manifest.json',
